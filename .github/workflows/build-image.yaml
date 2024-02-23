@@ -12,7 +12,7 @@ env:
 jobs:
   #Using this action https://github.com/marketplace/actions/build-and-push-docker-images
   build:
-    runs-on: neo-github
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
