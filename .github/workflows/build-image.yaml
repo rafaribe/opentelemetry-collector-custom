@@ -9,6 +9,7 @@ on:
     - cron: "0 0 * * *" # Runs at Midnight, everyday
 env:
   UBUNTU_VERSION: 24.04
+  ALPINE_VERSIOM: 3.19.1
 jobs:
   #Using this action https://github.com/marketplace/actions/build-and-push-docker-images
   build:
@@ -73,6 +74,7 @@ jobs:
           build-args: |
             UBUNTU_VERSION: ${{ env.UBUNTU_VERSION }}
             OTEL_VERSION: ${{steps.last-release.outputs.release}}
+            ALPINE_VERSION: ${{ env.ALPINE_VERSIOM }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}

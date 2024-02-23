@@ -1,12 +1,13 @@
 ARG UBUNTU_VERSION=24.04
 ARG OTEL_VERSION=0.95.0
+ARG ALPINE_VERSION=3.19.1
 
 FROM otel/opentelemetry-collector-contrib:${OTEL_VERSION} AS otelcol
 
-FROM alpine:3.19.1 as certs
+FROM alpine:${ALPINE_VERSION} as certs
 RUN apk --update add ca-certificates
 
-FROM alpine:3.19.1 as directories
+FROM alpine:${ALPINE_VERSION} as directories
 RUN mkdir /etc/otel/
 
 FROM ubuntu:${UBUNTU_VERSION} as systemd
