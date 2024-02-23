@@ -29,7 +29,7 @@ USER ${USER_UID}
 ENV HOME /etc/otel/
 
 # copy journalctl and it's dependencies as base structure
-COPY --from=systemd /output/ /
+COPY --from=systemd /output/ /usr/local/bin/
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=otelcol /otelcol-contrib /otelcol-contrib
 COPY --from=directories --chown=${USER_UID}:${USER_UID} /etc/otel/ /etc/otel/
