@@ -1,0 +1,73 @@
+name: build-otel-image
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * SUN" # Runs at 3:00AM on Sunday
+env:
+  UBUNTU_VERSION: 24.04
+jobs:
+  #Using this action https://github.com/marketplace/actions/build-and-push-docker-images
+  build:
+    runs-on: neo-github
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Get latest OpenTelemetry Collector Contrib Version
+        id: last-release
+        uses: Rubemlrm/gh-check-last-release@main
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          owner: "open-telemetry"
+          repo: "opentelemetry-collector-contrib"
+      - name: Set Versions
+        uses: actions/github-script@v7
+        id: version_sanitizer
+        with:
+          script: |
+            const tag = "${{ steps.last-release.outputs.release }}";
+            const no_v = tag.replace('v', '');
+            core.setOutput('no-v', no_v);
+      - name: Check outputs
+        run: |
+          echo "Latest Release - ${{ steps.otel_contrib_version.outputs.release }}"
+          echo "Latest Release without V - ${{steps.version_sanitizer.outputs.no-v}}"
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+          flavor: |
+            latest=true
+          labels: |
+            org.opencontainers.image.title=${{ github.repository }}
+            org.opencontainers.image.description="OpenTelemetry Collector Contrib image bundled with Journald"
+            org.opencontainers.image.vendor="Neoception"
+          tags: |
+            type=sha
+            type=sha,format=long
+            type=raw,value=${{steps.version_sanitizer.outputs.no-v}}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          build-args: |
+            UBUNTU_VERSION: ${{ env.UBUNTU_VERSION }}
+            OTEL_VERSION: ${{steps.last-release.outputs.release}}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
